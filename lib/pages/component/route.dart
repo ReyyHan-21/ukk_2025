@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ukk_2025/pages/component/appbar.dart';
-import 'package:ukk_2025/pages/ui/dashboard.dart';
+import 'package:ukk_2025/pages/ui/account.dart';
+import 'package:ukk_2025/pages/ui/produk.dart';
 
 class route extends StatefulWidget {
   const route({super.key});
@@ -13,12 +14,12 @@ class _NavbotState extends State<route> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = <Widget>[
-    Dashboard(
+    Produk(),
+    Text('Halo'),
+    Text('Halo'),
+    Account(
       user: {},
     ),
-    Text('Halo'),
-    Text('Halo'),
-    Text('Halo'),
   ];
 
   void _ontap(int index) {
@@ -38,12 +39,8 @@ class _NavbotState extends State<route> {
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.production_quantity_limits),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.block),
-            label: 'Nomor 2',
+            icon: Icon(Icons.six_ft_apart),
+            label: 'Produk',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.block),
@@ -52,6 +49,10 @@ class _NavbotState extends State<route> {
           BottomNavigationBarItem(
             icon: Icon(Icons.block),
             label: 'Nomor 4',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Account',
           ),
         ],
         type: BottomNavigationBarType.fixed,

@@ -1,38 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-class Dashboard extends StatefulWidget {
-  final Map<String, dynamic> user;
-  const Dashboard({super.key, required this.user});
+class Produk extends StatefulWidget {
+  const Produk({super.key});
 
   @override
-  State<Dashboard> createState() => _DashboardState();
+  State<Produk> createState() => _ProdukState();
 }
 
-class _DashboardState extends State<Dashboard> {
-  final TextEditingController username = TextEditingController();
-  final TextEditingController password = TextEditingController();
-
-  final SupabaseClient supabase = Supabase.instance.client;
-
-  // Belum Bisa Digunakan :)
-  Future<void> _addUser(String username, String password) async {
-    try {
-      await supabase.from('user').insert([
-        {'username': username},
-        {'password': password},
-      ]).single();
-    } catch (e) {}
-  }
-
+class _ProdukState extends State<Produk> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: 20,
-          vertical: 15,
+          vertical: 5,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,39 +61,20 @@ class _DashboardState extends State<Dashboard> {
             SizedBox(
               height: 20,
             ),
-            //
-            // Search Bar
-            //
+            SearchBar(
+              
+            ),
+            SizedBox(
+              height: 10,
+            ),
             Expanded(
-              child: ListView.builder(
-                  // itemCount:  ,
-                  itemBuilder: (context, index) {
-                return Column(
-                  children: [
-                    ListTile(
-                      leading: Icon(Icons.person),
-                      title: Text('test'),
-                    ),
-                    SizedBox(
-                      height: 5,
-                    ),
-                    Divider(),
-                  ],
-                );
-              }),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
             )
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        mini: true,
-        backgroundColor: Color(0xFFBB784C),
-        foregroundColor: Colors.white,
-        onPressed: () {},
-        child: Icon(Icons.add),
-      ),
     );
   }
-
-  void addUser() async {}
 }
