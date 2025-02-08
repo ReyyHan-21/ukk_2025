@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ukk_2025/pages/component/appbar.dart';
 import 'package:ukk_2025/pages/ui/account.dart';
+import 'package:ukk_2025/pages/ui/listproduk.dart';
+import 'package:ukk_2025/pages/ui/pelanggan.dart';
 import 'package:ukk_2025/pages/ui/produk.dart';
 
 class route extends StatefulWidget {
@@ -15,8 +17,8 @@ class _NavbotState extends State<route> {
 
   final List<Widget> _pages = <Widget>[
     Produk(),
-    Text('Halo'),
-    Text('Halo'),
+    Listproduk(),
+    Pelanggan(),
     Account(
       user: {},
     ),
@@ -43,12 +45,12 @@ class _NavbotState extends State<route> {
             label: 'Produk',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.block),
-            label: 'Nomor 3',
+            icon: Icon(Icons.list_alt_sharp),
+            label: 'List Product',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.block),
-            label: 'Nomor 4',
+            icon: Icon(Icons.people),
+            label: 'Customer',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

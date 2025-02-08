@@ -53,20 +53,52 @@ class _DashboardState extends State<Account> {
       setState(() {
         if (mounted) {
           // Belum Lengkap
-          user.addAll((response as List<dynamic>).map(
-            (user) {
-              return {
-                'id': user['id'],
-                'username': user['username'],
-                'password': user['password'],
-              };
-            },
-          ));
+          user.addAll((response as List<dynamic>).map((user) {
+            return {
+              'id': user['id'],
+              'username': user['username'],
+              'password': user['password'],
+            };
+          }).toList());
         }
       });
 
       // Digunakan Untuk mendebug hasil dari response
       print(response);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+        ),
+      );
+    }
+  }
+
+  // Mengedit data dari supabase
+  Future<void> editingUser() async {
+    try {
+      // belum jadi
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+        ),
+      );
+    }
+  }
+
+  // Menghapus data
+  Future<void> deleteUser(int userID) async {
+    try {
+      final response = await supabase.from('user').delete().eq('id', userID);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('User Berhasil Dihapus'),
+          ),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
