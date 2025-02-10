@@ -3,9 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Account extends StatefulWidget {
-  final Map<String, dynamic> user;
-
-  const Account({super.key, required this.user});
+  const Account({super.key});
 
   @override
   State<Account> createState() => _DashboardState();
@@ -27,20 +25,14 @@ class _DashboardState extends State<Account> {
       await supabase.from('user').insert({
         'username': username,
         'password': password,
-      }).single();
+      });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Berhasil Menambahkan User'),
-        ),
-      );
+      if (mounted) {
+        fetchUser();
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-          ),
-        );
+        _showError(e);
       }
     }
   }
@@ -52,7 +44,7 @@ class _DashboardState extends State<Account> {
 
       setState(() {
         if (mounted) {
-          // Belum Lengkap
+          user.clear();
           user.addAll((response as List<dynamic>).map((user) {
             return {
               'id': user['id'],
@@ -75,9 +67,21 @@ class _DashboardState extends State<Account> {
   }
 
   // Mengedit data dari supabase
-  Future<void> editingUser() async {
+  Future<void> editingUser(int id, String username, String password) async {
     try {
-      // belum jadi
+      await supabase.from('user').update({
+        'username': username,
+        'password': password,
+      }).eq('id', id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Berhasil Mengedit Data'),
+          ),
+        );
+        fetchUser();
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -99,20 +103,27 @@ class _DashboardState extends State<Account> {
           ),
         );
       }
+
+      fetchUser();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-        ),
-      );
+      _showError(e);
     }
+  }
+
+  // Error Dialog
+  void _showError(dynamic e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error: $e'),
+      ),
+    );
   }
 
   // * Berjalan ketika user pertama kali masuk ke dalam aplikasi
   @override
   void initState() {
-    super.initState();
     fetchUser();
+    super.initState();
   }
 
   // * Digunakan untuk menghapus data yang tidak digunakan
@@ -120,6 +131,7 @@ class _DashboardState extends State<Account> {
   void dispose() {
     usernameController.dispose();
     passwordController.dispose();
+    fetchUser();
     super.dispose();
   }
 
@@ -191,13 +203,17 @@ class _DashboardState extends State<Account> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                onPressed: editUser,
+                                onPressed: () {
+                                  editUser(user[index]);
+                                },
                                 icon: Icon(
                                   Icons.edit,
                                 ),
                               ),
                               IconButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  deleteUser(user[index]['id']);
+                                },
                                 icon: Icon(
                                   Icons.delete,
                                 ),
@@ -314,9 +330,15 @@ class _DashboardState extends State<Account> {
 
                             final username = usernameController.text;
                             final password = passwordController.text;
+
+                            usernameController.clear();
+                            passwordController.clear();
+
                             Navigator.of(context).pop();
 
                             _addUser(username, password);
+
+                            fetchUser();
                           }
                         },
                         child: Text(
@@ -335,109 +357,86 @@ class _DashboardState extends State<Account> {
     );
   }
 
-  // ! Belum Jadi
-  void editUser() {
+  // Dialog Untuk Memunculkan Alert Dialog Yang digunakan untuk Edit
+  void editUser(Map<String, dynamic> userData) {
+    usernameController.text = userData['username'];
+    passwordController.text = userData['password'];
+
     showDialog(
-        context: context,
-        builder: (BuildContext content) {
-          return AlertDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Form(
             key: _formKey,
-            content: Form(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Edit User',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Edit User',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextFormField(
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Username Tidak Boleh Kosong';
+                    }
+                    return null;
+                  },
+                  controller: usernameController,
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.person),
+                    labelText: 'Username',
+                  ),
+                ),
+                TextFormField(
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Password Tidak Boleh Kosong';
+                    }
+                    return null;
+                  },
+                  controller: passwordController,
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.lock),
+                    labelText: 'Password',
+                  ),
+                ),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child:
+                          Text('Keluar', style: TextStyle(color: Colors.red)),
                     ),
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  TextFormField(
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Username Tidak Boleh Kosong';
-                      }
-                      return null;
-                    },
-                    controller: usernameController,
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.person),
-                      label: Text(
-                        'Username',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                    TextButton(
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          editingUser(
+                            userData['id'],
+                            usernameController.text,
+                            passwordController.text,
+                          );
+                          Navigator.of(context).pop(); // Tutup dialog
+                        }
+                      },
+                      child:
+                          Text('Simpan', style: TextStyle(color: Colors.black)),
                     ),
-                  ),
-                  TextFormField(
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password Tidak Boleh Kosong';
-                      }
-                      return null;
-                    },
-                    controller: passwordController,
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock),
-                      label: Text(
-                        'Password',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(context);
-                        },
-                        child: Text(
-                          'Keluar',
-                          style: GoogleFonts.poppins(
-                            color: Colors.red,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Berhasil Mengedit User'),
-                              ),
-                            );
-
-                            Navigator.of(context).pop();
-
-                            // ! Belum Jadi
-                          }
-                        },
-                        child: Text(
-                          'Simpan',
-                          style: GoogleFonts.poppins(
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
   }
 }

@@ -31,14 +31,11 @@ class _PelangganState extends State<Pelanggan> {
           .from('pelanggan')
           .select()
           .or('NamaPelanggan.eq.$namaPelanggan,NomorTelepon.eq.$nomorTelepon');
-      if (existingPelanggan != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Pelanggan sudah ada!'),
-          ),
-        );
-        return;
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Pelanggan sudah ada!'),
+        ),
+      );
 
       await supabase.from('pelanggan').insert({
         'NamaPelanggan': namaPelanggan,
@@ -65,7 +62,6 @@ class _PelangganState extends State<Pelanggan> {
   }
 
   // Edit Pelanggan
-  // Edit Pelanggan
   Future<void> editPelanggan(
       int id, String namaPelanggan, String alamat, String nomorTelepon) async {
     try {
@@ -78,7 +74,9 @@ class _PelangganState extends State<Pelanggan> {
 
       if (existingPelanggan != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Nama Pelanggan sudah digunakan!')),
+          SnackBar(
+            content: Text('Nama Pelanggan sudah digunakan!'),
+          ),
         );
         return;
       }
@@ -216,18 +214,16 @@ class _PelangganState extends State<Pelanggan> {
               ),
               onChanged: (value) {
                 setState(() {
-                  searchBar =
-                      value.toLowerCase(); // Simpan query dalam huruf kecil
+                  searchBar = value.toLowerCase();
                 });
               },
             ),
-            SizedBox(height: 10), // Jarak antara search bar dan daftar produk
-
+            SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
                 itemCount: pelanggan.where((p) {
                   return p['NamaPelanggan'].toLowerCase().contains(searchBar);
-                }).length, // Hanya hitung produk yang cocok
+                }).length,
                 itemBuilder: (context, index) {
                   final filteringPelanggan = pelanggan.where((p) {
                     return p['NamaPelanggan'].toLowerCase().contains(searchBar);
@@ -290,15 +286,16 @@ class _PelangganState extends State<Pelanggan> {
                                         ),
                                         TextButton(
                                           onPressed: () async {
-                                            Navigator.of(dialogContext)
-                                                .pop(); // Tutup dialog lebih dulu
-                                            await deletePelanggan(pelanggan[
-                                                    index][
-                                                'Id']); // Pastikan 'Id' sesuai dengan database
+                                            Navigator.of(dialogContext).pop();
+                                            await deletePelanggan(
+                                              pelanggan[index]['Id'],
+                                            );
                                           },
                                           child: Text(
                                             'Hapus',
-                                            style: TextStyle(color: Colors.red),
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                            ),
                                           ),
                                         ),
                                       ],

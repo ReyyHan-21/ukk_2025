@@ -477,6 +477,11 @@ class _ListprodukState extends State<Listproduk> {
                       : null,
                   controller: stokProdukController,
                   decoration: InputDecoration(
+                    helperText: 'Hanya Bisa Diisi Angka',
+                    helperStyle: GoogleFonts.poppins(
+                      fontSize: 8,
+                      color: Colors.brown,
+                    ),
                     icon: Icon(Icons.calculate_outlined),
                     label: Text('Stok Produk'),
                   ),
@@ -489,6 +494,11 @@ class _ListprodukState extends State<Listproduk> {
                       : null,
                   controller: hargaProdukController,
                   decoration: InputDecoration(
+                    helperText: 'Hanya Bisa Diisi Angka',
+                    helperStyle: GoogleFonts.poppins(
+                      fontSize: 8,
+                      color: Colors.brown,
+                    ),
                     icon: Icon(Icons.price_change_outlined),
                     label: Text('Harga Produk'),
                   ),

@@ -4,6 +4,7 @@ import 'package:ukk_2025/pages/ui/account.dart';
 import 'package:ukk_2025/pages/ui/listproduk.dart';
 import 'package:ukk_2025/pages/ui/pelanggan.dart';
 import 'package:ukk_2025/pages/ui/produk.dart';
+import 'package:ukk_2025/pages/ui/transaction.dart';
 
 class route extends StatefulWidget {
   const route({super.key});
@@ -18,10 +19,9 @@ class _NavbotState extends State<route> {
   final List<Widget> _pages = <Widget>[
     Produk(),
     Listproduk(),
+    Transaction(),
     Pelanggan(),
-    Account(
-      user: {},
-    ),
+    Account(),
   ];
 
   void _ontap(int index) {
@@ -47,6 +47,10 @@ class _NavbotState extends State<route> {
           BottomNavigationBarItem(
             icon: Icon(Icons.list_alt_sharp),
             label: 'List Product',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_wallet),
+            label: 'Transaction',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.people),

@@ -45,7 +45,7 @@ class _LoginState extends State<Login> {
           .eq('password', password)
           .maybeSingle();
 
-      print(response);
+      print(Text('Info Login $response'));
 
       if (mounted) {
         if (response != null) {

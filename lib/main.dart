@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:ukk_2025/pages/auth/login.dart';
 import 'package:ukk_2025/pages/component/route.dart';
 
 Future<void> main() async {
