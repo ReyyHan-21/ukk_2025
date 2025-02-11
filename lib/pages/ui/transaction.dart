@@ -11,18 +11,16 @@ class Transaction extends StatefulWidget {
 
 class _TransactionState extends State<Transaction> {
   String searchBar = '';
-
   final SupabaseClient supabase = Supabase.instance.client;
-
   List<Map<String, dynamic>> detail_penjualan = [];
 
-  // * Mengambil Data
+  // Mengambil Data Transaksi
   Future<void> fetchDetail() async {
     try {
       final response = await supabase
           .from('penjualan')
           .select(
-              'TanggalPenjualan, TotalHarga, pelanggan(NamaPelanggan), detail_penjualan(JumlahProduk, SubTotal, produk(NamaProduk, Harga))')
+              'PenjualanID, TanggalPenjualan, TotalHarga, pelanggan(NamaPelanggan), detail_penjualan(JumlahProduk, SubTotal, produk(NamaProduk, Harga))')
           .order('TanggalPenjualan', ascending: false);
 
       if (mounted) {
@@ -35,11 +33,49 @@ class _TransactionState extends State<Transaction> {
     }
   }
 
+  // Fungsi Hapus Transaksi
+  Future<void> deleteTransaction(int id) async {
+    try {
+      await supabase.from('penjualan').delete().match({'PenjualanID': id});
+      fetchDetail(); // Refresh data setelah hapus
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transaksi berhasil dihapus')),
+      );
+    } catch (e) {
+      _showError(e);
+    }
+  }
+
+  // Tampilkan Dialog Konfirmasi Hapus
+  void confirmDelete(int id) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Transaksi?'),
+        content: const Text('Apakah Anda yakin ingin menghapus transaksi ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              deleteTransaction(id);
+            },
+            child: const Text(
+              'Hapus',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showError(dynamic e) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error: $e'),
-      ),
+      SnackBar(content: Text('Error: $e')),
     );
   }
 
@@ -63,36 +99,6 @@ class _TransactionState extends State<Transaction> {
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFFBB784C),
-              ),
-            ),
-            RichText(
-              text: TextSpan(
-                children: <InlineSpan>[
-                  TextSpan(
-                    text: 'Di ',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  TextSpan(
-                    text: 'Coffee Shop ',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFFFF6D0D),
-                    ),
-                  ),
-                  TextSpan(
-                    text: 'Kami',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: 20),
@@ -152,7 +158,7 @@ class _TransactionState extends State<Transaction> {
                                     ),
                                   ],
                                 ),
-                                Divider(),
+                                const Divider(),
                                 // List Produk dalam transaksi
                                 Column(
                                   children: (transaksi['detail_penjualan']
@@ -165,50 +171,35 @@ class _TransactionState extends State<Transaction> {
                                             borderRadius:
                                                 BorderRadius.circular(8),
                                           ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.end,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
+                                              Text(
+                                                produk['produk']['NamaProduk'],
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
                                               Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
                                                 children: [
                                                   Text(
-                                                    produk['produk']
-                                                        ['NamaProduk'],
+                                                    'Rp ${produk['produk']['Harga']}',
                                                     style: GoogleFonts.poppins(
                                                       fontSize: 13,
                                                       fontWeight:
                                                           FontWeight.w600,
+                                                      color:
+                                                          Colors.blueGrey[800],
                                                     ),
                                                   ),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Text(
-                                                        'Rp ${produk['produk']['Harga']}',
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                          fontSize: 13,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: Colors
-                                                              .blueGrey[800],
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        'x ${produk['JumlahProduk']}',
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                          fontSize: 12,
-                                                          color:
-                                                              Colors.grey[600],
-                                                        ),
-                                                      ),
-                                                    ],
+                                                  Text(
+                                                    ' x ${produk['JumlahProduk']}',
+                                                    style: GoogleFonts.poppins(
+                                                      fontSize: 12,
+                                                      color: Colors.grey[600],
+                                                    ),
                                                   ),
                                                 ],
                                               ),
@@ -224,6 +215,16 @@ class _TransactionState extends State<Transaction> {
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                     color: Colors.green,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.red),
+                                    onPressed: () =>
+                                        confirmDelete(transaksi['PenjualanID']),
                                   ),
                                 ),
                               ],

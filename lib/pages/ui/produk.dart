@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../component/pdf.dart';
+
 class Produk extends StatefulWidget {
   const Produk({super.key});
 
@@ -592,6 +594,9 @@ class _ProdukState extends State<Produk> {
                   ),
                 ),
                 SizedBox(height: 10),
+                SizedBox(
+                  height: 10,
+                ),
                 Column(
                   children: transaksi.map((item) {
                     return ListTile(
@@ -616,6 +621,13 @@ class _ProdukState extends State<Produk> {
             ),
           ),
           actions: [
+            ElevatedButton(
+              onPressed: () {
+                generateInvoicePDF(
+                    context, selectedPelanggan!, transaksi, totalHarga);
+              },
+              child: Text('Cetak PDF'),
+            ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
