@@ -1,3 +1,5 @@
+import 'package:elegant_notification/elegant_notification.dart';
+import 'package:elegant_notification/resources/arrays.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -80,11 +82,17 @@ class _ListprodukState extends State<Listproduk> {
       fetchProduk();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Produk Berhasil Ditambahkan'),
-          ),
-        );
+        ElegantNotification.success(
+          width: 360,
+          position: Alignment.topCenter,
+          animation: AnimationType.fromTop,
+          title: Text('Success'),
+          description: Text('Berhasil Menambahkan Produk'),
+          onDismiss: () {},
+          onNotificationPressed: () {},
+          isDismissable: true,
+          dismissDirection: DismissDirection.up,
+        ).show(context);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -103,21 +111,19 @@ class _ListprodukState extends State<Listproduk> {
           .from('produk')
           .select()
           .eq('NamaProduk', nama)
-          .neq('ProdukID',
-              id) // Pastikan tidak mengecek produk yang sedang diedit
+          .neq('ProdukID', id)
           .maybeSingle();
 
       if (existingProduk != null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Nama produk sudah digunakan! Pilih nama lain.')),
+              content: Text('Nama produk sudah digunakan! Pilih nama lain.'),
+            ),
           );
         }
         return;
       }
-
-      fetchProduk();
 
       await supabase.from('produk').update({
         'NamaProduk': nama,
@@ -131,6 +137,7 @@ class _ListprodukState extends State<Listproduk> {
             content: Text('Berhasil Mengedit Produk'),
           ),
         );
+        fetchProduk();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -237,8 +244,7 @@ class _ListprodukState extends State<Listproduk> {
                 });
               },
             ),
-            SizedBox(height: 10), // Jarak antara search bar dan daftar produk
-
+            SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
                 itemCount: produk.where((p) {

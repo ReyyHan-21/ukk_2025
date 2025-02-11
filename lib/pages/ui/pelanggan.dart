@@ -31,11 +31,6 @@ class _PelangganState extends State<Pelanggan> {
           .from('pelanggan')
           .select()
           .or('NamaPelanggan.eq.$namaPelanggan,NomorTelepon.eq.$nomorTelepon');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Pelanggan sudah ada!'),
-        ),
-      );
 
       await supabase.from('pelanggan').insert({
         'NamaPelanggan': namaPelanggan,

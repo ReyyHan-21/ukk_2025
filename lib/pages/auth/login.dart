@@ -152,9 +152,9 @@ class _LoginState extends State<Login> {
                             isObsecure = !isObsecure;
                           });
                         },
-                        icon: Icon(isObsecure
-                            ? Icons.visibility_off
-                            : Icons.visibility),
+                        icon: Icon(
+                          isObsecure ? Icons.visibility_off : Icons.visibility,
+                        ),
                       ),
                     ),
                     obscureText: isObsecure,

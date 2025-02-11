@@ -14,20 +14,20 @@ class _TransactionState extends State<Transaction> {
 
   final SupabaseClient supabase = Supabase.instance.client;
 
-  final List<Map<String, dynamic>> detail_produk = [];
+  List<Map<String, dynamic>> detail_penjualan = [];
 
+  // * Mengambil Data
   Future<void> fetchDetail() async {
     try {
-      final response = await supabase.from('detail_produk').select();
+      final response = await supabase
+          .from('penjualan')
+          .select(
+              'TanggalPenjualan, TotalHarga, pelanggan(NamaPelanggan), detail_penjualan(JumlahProduk, SubTotal, produk(NamaProduk, Harga))')
+          .order('TanggalPenjualan', ascending: false);
 
       if (mounted) {
         setState(() {
-          detail_produk.clear();
-          detail_produk.addAll((response as List<dynamic>).map((detail_produk) {
-            return {
-              'id': detail_produk['DetailID'],
-            };
-          }));
+          detail_penjualan = List<Map<String, dynamic>>.from(response);
         });
       }
     } catch (e) {
@@ -44,13 +44,16 @@ class _TransactionState extends State<Transaction> {
   }
 
   @override
+  void initState() {
+    fetchDetail();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 5,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -92,79 +95,143 @@ class _TransactionState extends State<Transaction> {
                 ],
               ),
             ),
-            SizedBox(
-              height: 20,
-            ),
+            const SizedBox(height: 20),
             TextField(
               decoration: InputDecoration(
                 labelText: 'Cari Transaksi.....',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
               onChanged: (value) {
                 setState(() {
-                  searchBar =
-                      value.toLowerCase(); // Simpan query dalam huruf kecil
+                  searchBar = value.toLowerCase();
                 });
               },
             ),
-            SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
             Expanded(
-              child: ListView.builder(
-                // Search Bar
-                itemCount: detail_produk.where((p) {
-                  return p['NamaProduk'].toLowerCase().contains(searchBar);
-                }).length,
-                itemBuilder: (context, index) {
-                  final filteredProduk = detail_produk.where((p) {
-                    return p['NamaProduk'].toLowerCase().contains(searchBar);
-                  }).toList();
+              child: detail_penjualan.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      itemCount: detail_penjualan.length,
+                      itemBuilder: (context, index) {
+                        final transaksi = detail_penjualan[index];
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ListTile(
-                        leading: Icon(Icons.coffee),
-                        title: Text(
-                          filteredProduk[index]['NamaProduk'],
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
+                        return Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Stok: ${filteredProduk[index]['Stok']}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Nama: ${transaksi['pelanggan']['NamaPelanggan']}',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[800],
+                                      ),
+                                    ),
+                                    Text(
+                                      transaksi['TanggalPenjualan'],
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Divider(),
+                                // List Produk dalam transaksi
+                                Column(
+                                  children: (transaksi['detail_penjualan']
+                                          as List)
+                                      .map<Widget>(
+                                        (produk) => Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[100],
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    produk['produk']
+                                                        ['NamaProduk'],
+                                                    style: GoogleFonts.poppins(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        'Rp ${produk['produk']['Harga']}',
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: Colors
+                                                              .blueGrey[800],
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        'x ${produk['JumlahProduk']}',
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                          fontSize: 12,
+                                                          color:
+                                                              Colors.grey[600],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                                Text(
+                                  'Total: Rp ${transaksi['TotalHarga']}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              'Harga: Rp ${filteredProduk[index]['Harga']}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        trailing: IconButton(
-                          onPressed: () {},
-                          icon: Icon(Icons.add_shopping_cart_outlined),
-                        ),
-                      ),
-                      Divider(),
-                    ],
-                  );
-                },
-              ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

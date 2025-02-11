@@ -10,14 +10,14 @@ class Account extends StatefulWidget {
 }
 
 class _DashboardState extends State<Account> {
-  final List<Map<String, dynamic>> user = [];
+  final SupabaseClient supabase = Supabase.instance.client;
 
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  bool isObsecure = true;
 
+  final List<Map<String, dynamic>> user = [];
   final _formKey = GlobalKey<FormState>();
-
-  final SupabaseClient supabase = Supabase.instance.client;
 
   // * Digunakan untuk menambahkan user kedalam database supabase
   Future<void> _addUser(String username, String password) async {
@@ -50,6 +50,7 @@ class _DashboardState extends State<Account> {
               'id': user['id'],
               'username': user['username'],
               'password': user['password'],
+              'role': user['role'],
             };
           }).toList());
         }
@@ -199,6 +200,7 @@ class _DashboardState extends State<Account> {
                             color: Color(0xFF96582F),
                           ),
                           title: Text(user[index]['username']),
+                          subtitle: Text('Role : ${user[index]['role']}'),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -293,6 +295,16 @@ class _DashboardState extends State<Account> {
                     controller: passwordController,
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          setState(() {
+                            isObsecure = !isObsecure;
+                          });
+                        },
+                        icon: Icon(
+                          isObsecure ? Icons.visibility_off : Icons.visibility,
+                        ),
+                      ),
                       label: Text(
                         'Password',
                         style: GoogleFonts.poppins(
@@ -301,6 +313,7 @@ class _DashboardState extends State<Account> {
                         ),
                       ),
                     ),
+                    obscureText: isObsecure,
                   ),
                   SizedBox(
                     height: 20,
@@ -402,8 +415,19 @@ class _DashboardState extends State<Account> {
                   controller: passwordController,
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          isObsecure = !isObsecure;
+                        });
+                      },
+                      icon: Icon(
+                        isObsecure ? Icons.visibility_off : Icons.visibility,
+                      ),
+                    ),
                     labelText: 'Password',
                   ),
+                  obscureText: isObsecure,
                 ),
                 SizedBox(height: 20),
                 Row(

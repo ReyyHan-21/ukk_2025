@@ -18,6 +18,7 @@ class _ProdukState extends State<Produk> {
   final List<Map<String, dynamic>> produk = [];
 
   final List<Map<String, dynamic>> cart = [];
+  final List<Map<String, dynamic>> user = [];
   List<Map<String, dynamic>> pelanggan = [];
 
   // Mengambil data Pelanggan Dari Supabase
@@ -36,6 +37,36 @@ class _ProdukState extends State<Produk> {
       }
     } catch (e) {
       _showError(e);
+    }
+  }
+
+  // Mengambil data user Dari Supabase
+  Future<void> fetchUser() async {
+    try {
+      final response = await supabase.from('user').select();
+
+      setState(() {
+        if (mounted) {
+          user.clear();
+          user.addAll((response as List<dynamic>).map((user) {
+            return {
+              'id': user['id'],
+              'username': user['username'],
+              'password': user['password'],
+              'role': user['role'],
+            };
+          }).toList());
+        }
+      });
+
+      // Digunakan Untuk mendebug hasil dari response
+      print(response);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+        ),
+      );
     }
   }
 
@@ -134,48 +165,53 @@ class _ProdukState extends State<Produk> {
     }
 
     try {
-      final String tanggal = DateTime.now().toIso8601String();
-      final int totalHarga = getTotalBelanja(); // Pastikan total harga benar
+      final String tanggal =
+          DateTime.now().toIso8601String(); // Format Untuk Tanggal
+      final int totalHarga = getTotalBelanja();
 
-      // Debugging untuk memastikan nilai yang dikirim
-      print('🛒 Transaksi dimulai...');
-      print('🛒 PelangganID: $selectedPelanggan');
-      print('🛒 TotalHarga: $totalHarga');
-      print('🛒 Tanggal: $tanggal');
-
-      // Simpan transaksi ke tabel 'penjualan'
       final response = await supabase.from('penjualan').insert({
         'PelangganID': selectedPelanggan,
         'TotalHarga': totalHarga,
         'TanggalPenjualan': tanggal,
-      }).select(); // Menggunakan select() agar mendapatkan response balik
+      }).select();
 
       if (response.isEmpty) {
-        throw Exception('Gagal menyimpan transaksi. Response kosong.');
+        throw Exception('Gagal menyimpan transaksi');
       }
 
-      print('✅ Transaksi berhasil!');
+      // Simpan detail transaksi ke tabel 'detail_penjualan'
+      for (var item in cart) {
+        final int penjualanID = response[0]['PenjualanID'];
+        final int subTotal = item['Harga'] * item['quantity'];
 
-      // 🔹 Pastikan stok diperbarui setelah transaksi sukses
+        await supabase.from('detail_penjualan').insert({
+          'PenjualanID': penjualanID,
+          'ProdukID': item['Id'],
+          'JumlahProduk': item['quantity'],
+          'SubTotal': subTotal,
+        });
+      }
+
+      // Perbarui stok produk
       await updateStock();
+      await fetchProduk();
 
-      // 🔹 Reset keranjang setelah stok diperbarui
+      List<Map<String, dynamic>> transaksi = List.from(cart);
+
+      // Tampilkan dialog konfirmasi
+      if (mounted) {
+        showDetailTransaksiDialog(context, transaksi, totalHarga);
+      }
+
+      // Reset keranjang setelah sukses
       setState(() {
         cart.clear();
+        selectedPelanggan = null;
       });
 
-      // 🔹 Notifikasi sukses
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Transaksi berhasil! Stok telah diperbarui.')),
-      );
-
-      // 🔹 Tutup modal
-      Navigator.of(context).pop();
+      print(Text('Transaksi Berhasil'));
     } catch (e) {
-      print('❌ Gagal menyimpan transaksi: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyimpan transaksi: $e')),
-      );
+      _showError(e);
     }
   }
 
@@ -183,9 +219,8 @@ class _ProdukState extends State<Produk> {
   Future<void> updateStock() async {
     try {
       for (var item in cart) {
-        final int currentStock = item['Stok'] ?? 0; // Pastikan stok tidak null
-        final num newStock = currentStock -
-            (item['quantity'] ?? 0); // Pastikan quantity tidak null
+        final int currentStock = item['Stok'] ?? 0;
+        final num newStock = currentStock - (item['quantity'] ?? 0);
 
         if (newStock < 0) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -195,27 +230,18 @@ class _ProdukState extends State<Produk> {
           return;
         }
 
-        // Debug log untuk memastikan nilai yang dikirim ke database
         print(
             'Mengupdate stok: ProdukID = ${item['Id']}, Stok Baru = $newStock');
 
-        // Update stok di database Supabase
-        final response = await supabase
+        await supabase
             .from('produk')
             .update({'Stok': newStock}).match({'ProdukID': item['Id']});
-
-        if (response.error != null) {
-          print('❌ Error saat update stok: ${response.error!.message}');
-          throw response.error!;
-        }
 
         print('✅ Stok produk ${item['NamaProduk']} berhasil diperbarui!');
       }
     } catch (e) {
       print('❌ Gagal memperbarui stok: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memperbarui stok: $e')),
-      );
+      _showError(e);
     }
   }
 
@@ -231,6 +257,7 @@ class _ProdukState extends State<Produk> {
   @override
   void initState() {
     fetchProduk();
+    fetchUser();
     fetchPelanggan();
     super.initState();
   }
@@ -257,6 +284,17 @@ class _ProdukState extends State<Produk> {
             RichText(
               text: TextSpan(
                 children: <InlineSpan>[
+                  TextSpan(
+                    text: (user.isNotEmpty
+                        ? user[0]['username'] ?? 'User'
+                        : 'Loading...'),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFFFF6D0D),
+                    ),
+                  ),
+                  TextSpan(text: ' '),
                   TextSpan(
                     text: 'Di ',
                     style: GoogleFonts.poppins(
@@ -332,7 +370,7 @@ class _ProdukState extends State<Produk> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Stok: ${filteredProduk[index]['Stok']}',
+                              'Stok: ${filteredProduk[index]['Stok'] == 0 ? 'Habis' : filteredProduk[index]['Stok']}',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -411,7 +449,9 @@ class _ProdukState extends State<Produk> {
                     items: pelanggan.map((pelanggan) {
                       return DropdownMenuItem(
                         value: pelanggan['id'].toString(),
-                        child: Text(pelanggan['nama']),
+                        child: Text(
+                          pelanggan['nama'],
+                        ),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -524,6 +564,65 @@ class _ProdukState extends State<Produk> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+// Menampilkan Dialog Pemberitahuan Selesai Transaksi
+  void showDetailTransaksiDialog(BuildContext context,
+      List<Map<String, dynamic>> transaksi, int totalHarga) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'Detail Transaksi',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Produk yang dibeli:',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Column(
+                  children: transaksi.map((item) {
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(item['NamaProduk']),
+                      subtitle: Text(
+                          'Jumlah: ${item['quantity']} | Harga: Rp ${item['Harga']}'),
+                      trailing: Text(
+                          'Subtotal: Rp ${item['Harga'] * item['quantity']}'),
+                    );
+                  }).toList(),
+                ),
+                Divider(),
+                Text(
+                  'Total Belanja: Rp $totalHarga',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Tutup'),
+            ),
+          ],
         );
       },
     );

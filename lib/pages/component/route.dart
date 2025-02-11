@@ -14,7 +14,7 @@ class route extends StatefulWidget {
 }
 
 class _NavbotState extends State<route> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 2;
 
   final List<Widget> _pages = <Widget>[
     Produk(),
@@ -34,15 +34,15 @@ class _NavbotState extends State<route> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size(0, 65),
+        preferredSize: Size(0, 45),
         child: Appbars(),
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.six_ft_apart),
-            label: 'Produk',
+            icon: Icon(Icons.payment),
+            label: 'Transaction',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.list_alt_sharp),
@@ -50,7 +50,7 @@ class _NavbotState extends State<route> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_balance_wallet),
-            label: 'Transaction',
+            label: 'History',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.people),
