@@ -121,9 +121,20 @@ class _TransactionState extends State<Transaction> {
               child: detail_penjualan.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : ListView.builder(
-                      itemCount: detail_penjualan.length,
+                      itemCount: detail_penjualan
+                          .where((transaksi) => transaksi['pelanggan']
+                                  ['NamaPelanggan']
+                              .toLowerCase()
+                              .contains(searchBar))
+                          .length,
                       itemBuilder: (context, index) {
-                        final transaksi = detail_penjualan[index];
+                        final filteredData = detail_penjualan
+                            .where((transaksi) => transaksi['pelanggan']
+                                    ['NamaPelanggan']
+                                .toLowerCase()
+                                .contains(searchBar))
+                            .toList();
+                        final transaksi = filteredData[index];
 
                         return Card(
                           elevation: 4,

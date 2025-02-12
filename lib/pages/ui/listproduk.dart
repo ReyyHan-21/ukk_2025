@@ -232,7 +232,10 @@ class _ListprodukState extends State<Listproduk> {
             TextField(
               decoration: InputDecoration(
                 labelText: 'Cari Produk...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Color(0xFFBB784C),
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -259,7 +262,10 @@ class _ListprodukState extends State<Listproduk> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ListTile(
-                        leading: Icon(Icons.coffee),
+                        leading: Icon(
+                          Icons.coffee,
+                          color: Color(0xFFBB784C),
+                        ),
                         title: Text(
                           filteredProduk[index]['NamaProduk'],
                           style: GoogleFonts.poppins(

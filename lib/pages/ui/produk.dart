@@ -16,12 +16,15 @@ class _ProdukState extends State<Produk> {
 
   String searchBar = '';
   String? selectedPelanggan;
+  bool applyDiscount = false;
 
   final List<Map<String, dynamic>> produk = [];
 
   final List<Map<String, dynamic>> cart = [];
   final List<Map<String, dynamic>> user = [];
   List<Map<String, dynamic>> pelanggan = [];
+
+  final double discountRate = 0.10;
 
   // Mengambil data Pelanggan Dari Supabase
   Future<void> fetchPelanggan() async {
@@ -202,7 +205,8 @@ class _ProdukState extends State<Produk> {
 
       // Tampilkan dialog konfirmasi
       if (mounted) {
-        showDetailTransaksiDialog(context, transaksi, totalHarga);
+        showDetailTransaksiDialog(context, transaksi, totalHarga, tanggal,
+            getNamaPelanggan(selectedPelanggan));
       }
 
       // Reset keranjang setelah sukses
@@ -249,11 +253,34 @@ class _ProdukState extends State<Produk> {
 
   // Total Belanjan
   int getTotalBelanja() {
-    return cart.fold(0, (total, item) {
-      int harga = item['Harga'];
-      int quantity = item['quantity'];
-      return total + (harga * quantity);
-    });
+    int total = cart.fold(
+        0,
+        (sum, item) =>
+            sum + (item['Harga'] as int) * (item['quantity'] as int));
+
+    if (applyDiscount) {
+      total = (total * (1 - discountRate)).toInt();
+    }
+    return total;
+  }
+
+  // Discount
+  double getDiscountedPrice(Map<String, dynamic> product) {
+    double hargaAsli = product['Harga'] * product['quantity'];
+    double diskon = (product['quantity'] > 4) ? (product['discount'] ?? 0) : 0;
+    return hargaAsli - (hargaAsli * (diskon / 100));
+  }
+
+  // Memanggil Nama Pelanggan
+  String getNamaPelanggan(String? id) {
+    if (id == null) return 'Tidak dipilih';
+
+    final pelangganData = pelanggan.firstWhere(
+      (pelanggan) => pelanggan['id'].toString() == id,
+      orElse: () => {'nama': 'Tidak ditemukan'},
+    );
+
+    return pelangganData['nama'];
   }
 
   @override
@@ -360,7 +387,10 @@ class _ProdukState extends State<Produk> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ListTile(
-                        leading: Icon(Icons.coffee),
+                        leading: Icon(
+                          Icons.coffee,
+                          color: Color(0xFFBB784C),
+                        ),
                         title: Text(
                           filteredProduk[index]['NamaProduk'],
                           style: GoogleFonts.poppins(
@@ -387,10 +417,19 @@ class _ProdukState extends State<Produk> {
                             ),
                           ],
                         ),
-                        trailing: IconButton(
-                          onPressed: () => addToCart(filteredProduk[index]),
-                          icon: Icon(Icons.add_shopping_cart_outlined),
-                        ),
+                        trailing: cart.contains(filteredProduk[index])
+                            ? Icon(
+                                Icons.check,
+                                color: Colors.green,
+                              ) // Produk sudah ada di cart
+                            : IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    addToCart(filteredProduk[index]);
+                                  });
+                                },
+                                icon: Icon(Icons.add_shopping_cart_outlined),
+                              ),
                       ),
                       Divider(),
                     ],
@@ -450,15 +489,14 @@ class _ProdukState extends State<Produk> {
                     ),
                     items: pelanggan.map((pelanggan) {
                       return DropdownMenuItem(
-                        value: pelanggan['id'].toString(),
-                        child: Text(
-                          pelanggan['nama'],
-                        ),
+                        value: pelanggan['id'].toString(), // ID pelanggan
+                        child: Text(pelanggan['nama']), // Nama pelanggan
                       );
                     }).toList(),
                     onChanged: (value) {
                       setState(() {
                         selectedPelanggan = value;
+                        applyDiscount = value != null;
                       });
                     },
                   ),
@@ -479,8 +517,35 @@ class _ProdukState extends State<Produk> {
                             itemBuilder: (context, index) {
                               return ListTile(
                                 title: Text(cart[index]['NamaProduk']),
-                                subtitle: Text(
-                                  'Jumlah: ${cart[index]['quantity']} | Total: Rp ${cart[index]['Harga'] * cart[index]['quantity']}',
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Jumlah: ${cart[index]['quantity']}'),
+                                    if (applyDiscount &&
+                                        cart[index]['quantity'] > 4 &&
+                                        cart[index]['discount'] != null) ...[
+                                      Text(
+                                        'Rp ${cart[index]['Harga'] * cart[index]['quantity']}',
+                                        style: TextStyle(
+                                          decoration:
+                                              TextDecoration.lineThrough,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Rp ${getDiscountedPrice(cart[index])}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green,
+                                        ),
+                                      ),
+                                    ] else ...[
+                                      Text(
+                                        'Total: Rp ${cart[index]['Harga'] * cart[index]['quantity']}',
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -498,12 +563,10 @@ class _ProdukState extends State<Produk> {
                                     IconButton(
                                       icon: Icon(Icons.add_circle_outline),
                                       onPressed: () {
-                                        setState(
-                                          () {
-                                            updateQuantity(index,
-                                                cart[index]['quantity'] + 1);
-                                          },
-                                        );
+                                        setState(() {
+                                          updateQuantity(index,
+                                              cart[index]['quantity'] + 1);
+                                        });
                                       },
                                     ),
                                   ],
@@ -572,8 +635,13 @@ class _ProdukState extends State<Produk> {
   }
 
 // Menampilkan Dialog Pemberitahuan Selesai Transaksi
-  void showDetailTransaksiDialog(BuildContext context,
-      List<Map<String, dynamic>> transaksi, int totalHarga) {
+  void showDetailTransaksiDialog(
+      BuildContext context,
+      List<Map<String, dynamic>> transaksi,
+      int totalHarga,
+      String tanggalPembelian,
+      String namaPelanggan) {
+    // Sekarang menerima nama, bukan ID
     showDialog(
       context: context,
       builder: (context) {
@@ -587,6 +655,22 @@ class _ProdukState extends State<Produk> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+                  'Pelanggan: $namaPelanggan',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Tanggal: $tanggalPembelian',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
                   'Produk yang dibeli:',
                   style: GoogleFonts.poppins(
                     fontSize: 16,
@@ -594,9 +678,6 @@ class _ProdukState extends State<Produk> {
                   ),
                 ),
                 SizedBox(height: 10),
-                SizedBox(
-                  height: 10,
-                ),
                 Column(
                   children: transaksi.map((item) {
                     return ListTile(
@@ -623,8 +704,8 @@ class _ProdukState extends State<Produk> {
           actions: [
             ElevatedButton(
               onPressed: () {
-                generateInvoicePDF(
-                    context, selectedPelanggan!, transaksi, totalHarga);
+                generateInvoicePDF(context, namaPelanggan, tanggalPembelian,
+                    transaksi, totalHarga);
               },
               child: Text('Cetak PDF'),
             ),

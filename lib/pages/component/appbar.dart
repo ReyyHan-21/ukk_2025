@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ukk_2025/pages/auth/login.dart';
 
 class Appbars extends StatelessWidget {
   final Widget? customeIcon;
@@ -15,14 +16,17 @@ class Appbars extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => Login(),
+                ),
+              );
+            },
             icon: Icon(Icons.logout),
           )
         ],
       ),
     );
   }
-
-  // Masih Belum ada
-  void logout() {}
 }
