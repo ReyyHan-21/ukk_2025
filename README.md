@@ -74,6 +74,16 @@ Selamat datang di **Coffee Shop**, sebuah sistem kasir sederhana yang dirancang 
 
 ---
 
+## 👥 5. Tampilan Riwayat Transaksi
+1. Buka menu **history**.
+2. Klik icon **🗑️** untuk menghapus history.
+
+📸 *Contoh tampilan riwayat transaksi:*
+
+<img src="https://github.com/user-attachments/assets/d0b8f635-7fe2-4bd7-9b98-1b9986c55f86" width="300">
+
+---
+
 ## 🎯 Fitur Fitur
 ✅ Login 
 ✅ Manajemen produk
