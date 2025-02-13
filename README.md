@@ -1,12 +1,15 @@
 # ukk_2025
 
-A new Flutter project.
+Nama : Alfando Reyhan Saputra
+Kelas : XII RPL 2
 
-## Getting Started
+## Manual Book App
 
-This project is a starting point for a Flutter application.
+
 
 A few resources to get you started if this is your first Flutter project:
+
+![GIF](https://media.giphy.com/media/hvRJCLFzcasrR4ia7z/giphy.gif)
 
 - [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
 - [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
