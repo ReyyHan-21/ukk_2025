@@ -1,6 +1,11 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:elegant_notification/elegant_notification.dart';
+import 'package:elegant_notification/resources/arrays.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:ukk_2025/pages/helper/notification.dart';
 
 class Transaction extends StatefulWidget {
   const Transaction({super.key});
@@ -14,7 +19,7 @@ class _TransactionState extends State<Transaction> {
   final SupabaseClient supabase = Supabase.instance.client;
   List<Map<String, dynamic>> detail_penjualan = [];
 
-  // Mengambil Data Transaksi
+  // * Mengambil Data Transaksi
   Future<void> fetchDetail() async {
     try {
       final response = await supabase
@@ -29,24 +34,22 @@ class _TransactionState extends State<Transaction> {
         });
       }
     } catch (e) {
-      _showError(e);
+      NotificationHelper.showError(context, e);
     }
   }
 
-  // Fungsi Hapus Transaksi
+  // * Fungsi Hapus Transaksi
   Future<void> deleteTransaction(int id) async {
     try {
       await supabase.from('penjualan').delete().match({'PenjualanID': id});
       fetchDetail(); // Refresh data setelah hapus
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transaksi berhasil dihapus')),
-      );
+      NotificationHelper.showSuccess(context, 'Berhasil Menghapus Transaksi');
     } catch (e) {
-      _showError(e);
+      NotificationHelper.showError(context, e);
     }
   }
 
-  // Tampilkan Dialog Konfirmasi Hapus
+  // * Tampilkan Dialog Konfirmasi Hapus
   void confirmDelete(int id) {
     showDialog(
       context: context,
@@ -70,12 +73,6 @@ class _TransactionState extends State<Transaction> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showError(dynamic e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
     );
   }
 

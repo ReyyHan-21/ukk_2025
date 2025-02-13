@@ -1,7 +1,14 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:elegant_notification/elegant_notification.dart';
+import 'package:elegant_notification/resources/arrays.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ukk_2025/pages/component/route.dart';
+import 'package:ukk_2025/pages/helper/notification.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -14,27 +21,16 @@ class _LoginState extends State<Login> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool isObsecure = true;
+  late SharedPreferences _prefs;
 
-  // Digunakan untuk menampilkan pesan dalam bentuk snackbar
-  void _showField(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
-  }
-
-  // Digunakan untuk Mengambil data dari table username
+  // * Digunakan untuk Mengambil data dari table username
   Future<void> _login() async {
     final username = usernameController.text;
     final password = passwordController.text;
 
-    if (username.isEmpty) {
-      return _showField('Username Wajib Diisi');
-    }
-
-    if (password.isEmpty) {
-      return _showField('password Wajib Diisi');
+    if (username.isEmpty || password.isEmpty) {
+      return NotificationHelper.showError(
+          context, 'Wajib Mengisi Username Dan Password');
     }
 
     try {
@@ -45,22 +41,39 @@ class _LoginState extends State<Login> {
           .eq('password', password)
           .maybeSingle();
 
-      print(Text('Info Login $response'));
+      if (kDebugMode) {
+        print(Text('Info Login $response'));
+      }
 
       if (mounted) {
         if (response != null) {
+          NotificationHelper.showSuccess(context, 'Berhasil Login ');
+
+          await _prefs.setBool('isLoggedIn', true);
+
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => route(),
             ),
           );
         } else {
-          _showField('Username dan Password Salah');
+          NotificationHelper.showError(context, 'Username Dan Password Salah');
         }
       }
-    } catch (error) {
-      _showField('Error');
+    } catch (e) {
+      NotificationHelper.showError(context, e);
     }
+  }
+
+  // *
+  Future<void> _initPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
+
+  @override
+  void initState() {
+    _initPrefs();
+    super.initState();
   }
 
   @override
@@ -163,10 +176,36 @@ class _LoginState extends State<Login> {
                     height: 40,
                   ),
                   ElevatedButton(
-                    style: ButtonStyle(),
-                    onPressed: _login,
-                    child: Text('Masuk'),
-                  )
+                    onPressed: () async {
+                      // Cek apakah sudah login sebelumnya
+                      bool isLoggedIn = _prefs.getBool('isLoggedIn') ?? false;
+                      if (isLoggedIn) {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => route(),
+                          ),
+                        );
+                      } else {
+                        await _login();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFF4E342E),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32.0, vertical: 16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                    ),
+                    child: Text(
+                      'Masuk',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ukk_2025/pages/auth/login.dart';
 
 class Appbars extends StatelessWidget {
@@ -16,17 +17,21 @@ class Appbars extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => Login(),
-                ),
-              );
-            },
             icon: Icon(Icons.logout),
+            onPressed: () => logout(context),
           )
         ],
       ),
+    );
+  }
+
+  // * LogOut
+  Future<void> logout(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isLoggedIn');
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const Login()),
     );
   }
 }

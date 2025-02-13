@@ -1,6 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:elegant_notification/elegant_notification.dart';
+import 'package:elegant_notification/resources/arrays.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:ukk_2025/pages/helper/notification.dart';
 
 import '../component/pdf.dart';
 
@@ -26,7 +32,7 @@ class _ProdukState extends State<Produk> {
 
   final double discountRate = 0.10;
 
-  // Mengambil data Pelanggan Dari Supabase
+  // * Mengambil data Pelanggan Dari Supabase
   Future<void> fetchPelanggan() async {
     try {
       final response = await supabase.from('pelanggan').select();
@@ -41,11 +47,11 @@ class _ProdukState extends State<Produk> {
         });
       }
     } catch (e) {
-      _showError(e);
+      NotificationHelper.showError(context, e);
     }
   }
 
-  // Mengambil data user Dari Supabase
+  // * Mengambil data user Dari Supabase
   Future<void> fetchUser() async {
     try {
       final response = await supabase.from('user').select();
@@ -65,17 +71,15 @@ class _ProdukState extends State<Produk> {
       });
 
       // Digunakan Untuk mendebug hasil dari response
-      print(response);
+      if (kDebugMode) {
+        print(user.map((user) => user['username']).toList());
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-        ),
-      );
+      NotificationHelper.showError(context, e);
     }
   }
 
-  // Mengambil Data Dari Tabel Produk Supabase
+  // * Mengambil Data Dari Tabel Produk Supabase
   Future<void> fetchProduk() async {
     try {
       final response = await supabase.from('produk').select();
@@ -94,12 +98,12 @@ class _ProdukState extends State<Produk> {
         });
       }
 
-      print(response);
+      if (kDebugMode) {
+        print(produk.map((item) => item['NamaProduk']).toList());
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengambil produk: $e')),
-        );
+        NotificationHelper.showError(context, 'Gagal Mengambil Produk: $e');
       }
     }
   }
@@ -110,22 +114,16 @@ class _ProdukState extends State<Produk> {
       int productIndex = cart.indexWhere((prod) => prod['Id'] == item['Id']);
       if (productIndex == -1) {
         cart.add({...item, 'quantity': 1});
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${item['NamaProduk']} telah ditambahkan ke keranjang!'),
-          ),
-        );
+        NotificationHelper.showInfo(
+            context, '${item['NamaProduk']} telah ditambahkan di keranjang');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('${item['NamaProduk']} sudah ada di keranjang!')),
-        );
+        NotificationHelper.showErrorMessage(
+            context, '${item['NamaProduk']} sudah ada di keranjang!');
       }
     });
   }
 
-// digunakan untuk menambahkan jumlah product yang ada di keranjang
+// * digunakan untuk menambahkan jumlah product yang ada di keranjang
   void updateQuantity(int index, int quantity) {
     setState(() {
       if (quantity <= 0) {
@@ -135,37 +133,23 @@ class _ProdukState extends State<Produk> {
         if (quantity <= availableStock) {
           cart[index]['quantity'] = quantity;
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Jumlah yang tersedia hanya $availableStock')),
-          );
+          NotificationHelper.showInfo(
+              context, 'Stok Yang Tersedia Hanya: $availableStock');
         }
       }
     });
   }
 
-  // Digunakan Untuk Membuat Pesan
-  void _showError(dynamic e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error: $e'),
-      ),
-    );
-  }
-
   // menyimpan transaksi ke Supabase
   Future<void> submitTransaction() async {
     if (selectedPelanggan == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Silakan pilih pelanggan terlebih dahulu!')),
-      );
+      NotificationHelper.showInfo(
+          context, 'Silahkan Pilih Pelanggan Terlebih Dahulu');
       return;
     }
 
     if (cart.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Keranjang masih kosong!')),
-      );
+      NotificationHelper.showInfo(context, 'Keranjang Masih Kosong!');
       return;
     }
 
@@ -217,7 +201,7 @@ class _ProdukState extends State<Produk> {
 
       print(Text('Transaksi Berhasil'));
     } catch (e) {
-      _showError(e);
+      NotificationHelper.showError(context, e);
     }
   }
 
@@ -229,10 +213,8 @@ class _ProdukState extends State<Produk> {
         final num newStock = currentStock - (item['quantity'] ?? 0);
 
         if (newStock < 0) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Stok ${item['NamaProduk']} tidak mencukupi!')),
-          );
+          NotificationHelper.showInfo(
+              context, 'Stok ${item['NamaProduk']} tidak mencukupi!');
           return;
         }
 
@@ -247,7 +229,7 @@ class _ProdukState extends State<Produk> {
       }
     } catch (e) {
       print('❌ Gagal memperbarui stok: $e');
-      _showError(e);
+      NotificationHelper.showError(context, e);
     }
   }
 
@@ -398,24 +380,12 @@ class _ProdukState extends State<Produk> {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Stok: ${filteredProduk[index]['Stok'] == 0 ? 'Habis' : filteredProduk[index]['Stok']}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              'Harga: Rp ${filteredProduk[index]['Harga']}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                        subtitle: Text(
+                          'Stok: ${filteredProduk[index]['Stok'] == 0 ? 'Habis' : filteredProduk[index]['Stok']} || Harga: Rp ${filteredProduk[index]['Harga']}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         trailing: cart.contains(filteredProduk[index])
                             ? Icon(
@@ -603,21 +573,11 @@ class _ProdukState extends State<Produk> {
                         onPressed: () {
                           submitTransaction();
                           if (selectedPelanggan == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Silakan pilih pelanggan terlebih dahulu!',
-                                ),
-                              ),
-                            );
+                            NotificationHelper.showInfo(context,
+                                'Silahkan Pilih Pelanggan Terlebih Dahulu');
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Pembelian berhasil!',
-                                ),
-                              ),
-                            );
+                            NotificationHelper.showSuccess(
+                                context, 'Pembelian Berhasil');
                             Navigator.of(context).pop();
                           }
                         },
